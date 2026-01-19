@@ -1,0 +1,34 @@
+version: 0.2
+
+env:
+variables:
+AWS_REGION: ap-south-1
+IMAGE_REPO_NAME: brain_task_project
+IMAGE_TAG: latest
+
+phases:
+pre_build:
+commands:
+- echo Logging in to Amazon ECR...
+- aws --version
+- aws ecr get-login-password --region $AWS_REGION | docker login --username AWS --password-stdin 758234806674.dkr.ecr.$AWS_REGION.amazonaws.com
+
+build:
+commands:
+- echo Build started on `date`
+- echo Building the Docker image...
+- docker build -t $IMAGE_REPO_NAME:$IMAGE_TAG .
+- docker tag $IMAGE_REPO_NAME:$IMAGE_TAG 758234806674.dkr.ecr.$AWS_REGION.amazonaws.com/$IMAGE_REPO_NAME:$IMAGE_TAG
+
+post_build:
+commands:
+- echo Build completed on `date`
+- echo Pushing the Docker image...
+- docker push 758234806674.dkr.ecr.$AWS_REGION.amazonaws.com/$IMAGE_REPO_NAME:$IMAGE_TAG
+- echo Writing image definitions file...
+- printf '[{"name":"brain_task_project","imageUri":"%s"}]' 758234806674.dkr.ecr.$AWS_REGION.amazonaws.com/$IMAGE_REPO_NAME:$IMAGE_TAG > imagedefinitions.json
+
+artifacts:
+files:
+- imagedefinitions.json
+
